@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 
 const ROASTS = {
   ducky: [
@@ -18,9 +18,11 @@ const ROASTS = {
   ]
 }
 
-export default function RoastOverlay({ mode='ducky', userName='Abe', goal='Goal', onClose }){
+export default function RoastOverlay({ mode='ducky', userName='Abe', goal='Goal', unskippable=false, seconds=6, onClose }){
   const pick = ROASTS[mode] || ROASTS.ducky
   const roast = pick[Math.floor(Math.random()*pick.length)]
+  const [count, setCount] = useState(seconds)
+  const [blocked, setBlocked] = useState(!!unskippable)
 
   useEffect(()=>{
     // tts
@@ -30,7 +32,23 @@ export default function RoastOverlay({ mode='ducky', userName='Abe', goal='Goal'
       speechSynthesis.cancel()
       speechSynthesis.speak(s)
     }catch(e){}
-  },[mode, userName])
+
+    if (unskippable) {
+      setBlocked(true)
+      setCount(seconds)
+      const t = setInterval(()=>{
+        setCount(c=>{
+          if (c<=1){
+            clearInterval(t)
+            setBlocked(false)
+            return 0
+          }
+          return c-1
+        })
+      },1000)
+      return ()=>clearInterval(t)
+    }
+  }, [mode, userName, roast, unskippable, seconds])
 
   function playRoastAudio(){
     try{
@@ -40,12 +58,13 @@ export default function RoastOverlay({ mode='ducky', userName='Abe', goal='Goal'
 
   return (
     <div className="roast-overlay">
-      <div className="roast-card glass">
+      <div className="roast-card glass aggressive">
         <h2>Savage Roast</h2>
         <p className="roast-text">{userName}! {roast}</p>
+        {unskippable && <div className="countdown">Unlocks in <strong>{count}s</strong></div>}
         <div className="roast-actions">
           <button className="primary" onClick={()=>{playRoastAudio();}}>Play Punch</button>
-          <button onClick={onClose}>Close</button>
+          <button onClick={()=>{ if (!blocked) onClose && onClose() }} disabled={blocked}>Close</button>
         </div>
       </div>
     </div>

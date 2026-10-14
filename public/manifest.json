@@ -2,9 +2,13 @@
   "name": "LOCK-IN & ROAST",
   "short_name": "LOCK-ROAST",
   "start_url": ".",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#0F0F12",
   "theme_color": "#0F0F12",
+  "categories": ["productivity","entertainment"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/icons/icon-192.svg",

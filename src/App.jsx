@@ -4,6 +4,7 @@ import Timer from './components/Timer'
 import RoastOverlay from './components/RoastOverlay'
 import ProofScanner from './components/ProofScanner'
 import EmergencyCard from './components/EmergencyCard'
+import TestSimulator from './components/TestSimulator'
 
 export default function App() {
   const [userName, setUserName] = useState('Abe');
@@ -13,52 +14,109 @@ export default function App() {
   const [violations, setViolations] = useState(0);
   const [roastVisible, setRoastVisible] = useState(false);
   const [roastMode, setRoastMode] = useState('ducky');
-  const [notificationPermission, setNotificationPermission] = useState(Notification.permission);
+  const [aggressive, setAggressive] = useState(true);
+  const [unskippableSeconds, setUnskippableSeconds] = useState(8);
   const lastHiddenRef = useRef(null);
+  const sirenRef = useRef(null);
+  const restoreResolveRef = useRef(null);
 
   useEffect(() => {
     if (Notification && Notification.permission === 'default') {
-      Notification.requestPermission().then((p) => setNotificationPermission(p))
+      Notification.requestPermission().then(() => {})
     }
 
     function onVisibilityChange() {
       if (!document) return;
       if (document.visibilityState === 'hidden') {
         lastHiddenRef.current = Date.now();
+        if (window._focusSessionActive && aggressive) {
+          startSiren();
+          showPersistentNotification(`${userName}! ${goal} pending hai, Instagram pe reels dekhne kyu chala gaya?!`)
+        }
       } else if (document.visibilityState === 'visible') {
-        // when user returns
         const leftAt = lastHiddenRef.current;
-        if (leftAt && window._focusSessionActive) {
+        if (leftAt && window._focusSessionActive && aggressive) {
           // treated as a violation
           setViolations((v) => v + 1);
-          playSiren();
-          showNotification(`${userName}! ${goal} pending hai, Instagram pe reels dekhne kyu chala gaya?!`)
-          setTimeout(() => setRoastVisible(true), 600)
+          // ensure siren playing
+          startSiren();
+          // show unskippable roast overlay
+          setTimeout(() => setRoastVisible(true), 250);
         }
       }
     }
 
     document.addEventListener('visibilitychange', onVisibilityChange)
     return () => document.removeEventListener('visibilitychange', onVisibilityChange)
-  }, [goal, userName])
+  }, [goal, userName, aggressive])
 
-  function showNotification(text) {
+  async function showPersistentNotification(text) {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration()
+      if (reg && reg.showNotification) {
+        reg.showNotification('LOCK-IN & ROAST', {
+          body: text,
+          tag: 'lockin-roast',
+          renotify: true,
+          requireInteraction: true,
+          vibrate: [200, 100, 200],
+          badge: '/icons/icon-192.svg'
+        })
+        return
+      }
+    } catch (e) {}
+
     try {
       if (Notification.permission === 'granted') {
-        new Notification('LOCK-IN & ROAST', { body: text, silent: false, badge: '/icons/icon-192.svg' })
+        new Notification('LOCK-IN & ROAST', { body: text, silent: false })
       }
-    } catch (e) { console.warn(e) }
+    } catch (e) {}
   }
 
-  function playSiren() {
-    try {
+  function startSiren(){
+    try{
+      if (sirenRef.current) return
       const a = new Audio('https://actions.googleusercontent.com/sounds/v1/alarms/alarm_clock.ogg')
       a.loop = true
-      a.volume = 0.8
+      a.volume = 1.0
       a.play().catch(()=>{})
-      // stop after 3s
-      setTimeout(()=>{a.pause(); a.currentTime=0}, 3000)
-    } catch (e) {}
+      sirenRef.current = a
+      // try to keep it playing by re-triggering if paused
+      const id = setInterval(()=>{
+        try{ if (sirenRef.current && sirenRef.current.paused) { sirenRef.current.play().catch(()=>{}); } }catch(e){}
+      }, 1200)
+      sirenRef.current._keepAliveId = id
+    }catch(e){}
+  }
+
+  function stopSiren(){
+    try{
+      if (!sirenRef.current) return
+      clearInterval(sirenRef.current._keepAliveId)
+      sirenRef.current.pause()
+      sirenRef.current.currentTime = 0
+      sirenRef.current = null
+    }catch(e){}
+  }
+
+  function onRoastClose(){
+    // stop siren when roast countdown finishes
+    stopSiren()
+    setRoastVisible(false)
+  }
+
+  function handleTestTrigger(){
+    // simulate a backgrounding + return sequence
+    // step 1: simulate hide
+    if (aggressive) {
+      startSiren()
+      showPersistentNotification(`${userName}! Testing aggressive interception — return to see roast.`)
+    }
+    // step 2: show roast overlay after small delay to mimic return
+    setTimeout(()=>{
+      setViolations((v)=>v+1);
+      setRoastVisible(true)
+    }, 800)
   }
 
   return (
@@ -114,6 +172,15 @@ export default function App() {
             <ProofScanner userName={userName} goal={goal} />
             <EmergencyCard userName={userName} goal={goal} violations={violations} />
           </div>
+
+          <div className="card glass">
+            <h2>Test Blocker / Simulator</h2>
+            <p>Use the simulator below to experience aggressive interception on mobile browsers.</p>
+            <TestSimulator onTrigger={handleTestTrigger} />
+            <div style={{marginTop:10}}>
+              <label style={{display:'flex',alignItems:'center',gap:8}}><input type="checkbox" checked={aggressive} onChange={(e)=>setAggressive(e.target.checked)} /> Aggressive Interception Mode</label>
+            </div>
+          </div>
         </section>
 
         <section className="right">
@@ -138,7 +205,7 @@ export default function App() {
       </main>
 
       {roastVisible && (
-        <RoastOverlay mode={roastMode} userName={userName} goal={goal} onClose={() => setRoastVisible(false)} />
+        <RoastOverlay mode={roastMode} userName={userName} goal={goal} unskippable seconds={unskippableSeconds} onClose={onRoastClose} />
       )}
 
       <footer className="footer">
