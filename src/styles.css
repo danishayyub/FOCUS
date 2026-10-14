@@ -1,0 +1,43 @@
+/* Neon dark theme styles */
+:root{
+  --bg:#0F0F12;
+  --glass: rgba(255,255,255,0.03);
+  --accent:#8B5CF6;
+  --danger:#EF4444;
+  --green:#22C55E;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,Arial;background:linear-gradient(180deg,#0F0F12,#0b0b0c);color:#E6E6E9}
+.app-root{min-height:100vh;padding:16px}
+.topbar{display:flex;align-items:center;justify-content:space-between}
+.topbar h1{margin:0;color:var(--accent);letter-spacing:1px}
+.container{display:flex;gap:16px;margin-top:16px;flex-wrap:wrap}
+.left{flex:1;min-width:280px}
+.right{width:380px}
+.card{padding:12px;border-radius:12px;background:var(--glass);border:1px solid rgba(255,255,255,0.04)}
+.glass{backdrop-filter: blur(6px)}
+.form-grid input, .form-grid select{display:block;width:100%;padding:8px;margin-bottom:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#fff}
+.duration-row button{margin-right:6px;padding:6px 8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:#fff}
+.chip{display:inline-block;margin:6px;padding:6px 8px;background:rgba(255,255,255,0.02);border-radius:999px}
+.timer{display:flex;flex-direction:column;align-items:center}
+.ring-wrap{width:220px;height:220px}
+.ring{width:100%;height:100%}
+.ring circle.bg{fill:none;stroke:#111;stroke-width:10}
+.ring circle.fg{fill:none;stroke:var(--accent);stroke-width:10;transform-origin:center;transform:rotate(-90deg)}
+.ring-text{fill:#fff;font-size:12px;font-weight:700}
+.timer-controls{margin-top:12px}
+button{cursor:pointer;padding:8px 12px;border-radius:10px;border:none}
+.primary{background:linear-gradient(90deg,var(--accent),#6d28d9);color:#fff}
+.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:#fff}
+.try-blockers .row{margin-top:8px}
+.install-banner{display:flex;justify-content:space-between;align-items:center;padding:12px;margin-top:12px;border:1px solid rgba(255,255,255,0.03)}
+.roast-overlay{position:fixed;inset:0;background:linear-gradient(90deg, rgba(0,0,0,0.6), rgba(0,0,0,0.85));display:flex;align-items:center;justify-content:center;z-index:60}
+.roast-card{max-width:680px;padding:24px;border-radius:14px;border:1px solid rgba(255,255,255,0.05)}
+.roast-text{font-size:20px;color:#fff}
+.scan-logs{max-height:120px;overflow:auto;margin-top:8px}
+.log{font-size:12px;opacity:0.85}
+.footer{margin-top:28px;text-align:center;opacity:0.7}
+@media(max-width:900px){
+  .container{flex-direction:column}
+  .right{width:100%}
+}
