@@ -26,10 +26,12 @@ export default function RoastOverlay({ mode='ducky', userName='Abe', goal='Goal'
 
   useEffect(()=>{
     try{
-      const s = new SpeechSynthesisUtterance(`${userName}! ${roast}`)
-      s.lang = mode === 'desi' ? 'hi-IN' : 'en-US'
-      speechSynthesis.cancel()
-      speechSynthesis.speak(s)
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window && window.speechSynthesis){
+        const s = new window.SpeechSynthesisUtterance(`${userName}! ${roast}`)
+        s.lang = mode === 'desi' ? 'hi-IN' : 'en-US'
+        try{ window.speechSynthesis.cancel() }catch(e){}
+        try{ window.speechSynthesis.speak(s) }catch(e){}
+      }
     }catch(e){}
 
     if (unskippable) {
