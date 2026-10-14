@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import App from './App'
 import './styles.css'
 
-// Register service worker (from public/sw.js) safely
+// Register service worker (from public/sw.js) safely but don't block render
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
   try{
     window.addEventListener('load', () => {
@@ -15,5 +15,9 @@ if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
 const rootEl = document.getElementById('root')
 if (rootEl) {
   const root = createRoot(rootEl)
-  try{ root.render(<App />) }catch(e){ console.error('Render error', e) }
+  root.render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  )
 }
