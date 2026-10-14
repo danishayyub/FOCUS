@@ -175,7 +175,10 @@ export default function App() {
             <p>Use the simulator below to experience aggressive interception on mobile browsers.</p>
             <TestSimulator onTrigger={handleTestTrigger} />
             <div style={{marginTop:10}}>
-              <label style={{display:'flex',alignItems:'center',gap:8}}><input type="checkbox" checked={aggressive} onChange={(e)=>setAggressive(e.target.checked)} /> Aggressive Interception Mode</label>
+              <label style={{display:'flex',alignItems:'center',gap:8}}>
+                <input type="checkbox" checked={aggressive} onChange={(e)=>setAggressive(e.target.checked)} />
+                Aggressive Interception Mode
+              </label>
             </div>
           </div>
         </section>
