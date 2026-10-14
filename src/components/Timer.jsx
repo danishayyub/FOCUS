@@ -6,7 +6,7 @@ function formatSeconds(s){
   return `${mm}:${ss}`
 }
 
-export default function Timer({ duration=25, userName, goal, onViolation }){
+export default function Timer({ duration=25, userName, goal, onViolation, playFanfare }){
   const [running, setRunning] = useState(false)
   const [seconds, setSeconds] = useState(duration*60)
   const [violations, setViolations] = useState(0)
@@ -25,8 +25,7 @@ export default function Timer({ duration=25, userName, goal, onViolation }){
             clearInterval(intervalRef.current)
             window._focusSessionActive = false
             setRunning(false)
-            // victory fanfare
-            try{ new Audio('https://actions.googleusercontent.com/sounds/v1/alarms/digital_watch_alarm_long.ogg').play().catch(()=>{}) }catch(e){}
+            try{ if (playFanfare) playFanfare() }catch(e){}
             return 0
           }
           return s-1

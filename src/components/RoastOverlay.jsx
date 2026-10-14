@@ -18,14 +18,13 @@ const ROASTS = {
   ]
 }
 
-export default function RoastOverlay({ mode='ducky', userName='Abe', goal='Goal', unskippable=false, seconds=6, onClose }){
+export default function RoastOverlay({ mode='ducky', userName='Abe', goal='Goal', unskippable=false, seconds=6, onClose, playPunch }){
   const pick = ROASTS[mode] || ROASTS.ducky
   const roast = pick[Math.floor(Math.random()*pick.length)]
   const [count, setCount] = useState(seconds)
   const [blocked, setBlocked] = useState(!!unskippable)
 
   useEffect(()=>{
-    // tts
     try{
       const s = new SpeechSynthesisUtterance(`${userName}! ${roast}`)
       s.lang = mode === 'desi' ? 'hi-IN' : 'en-US'
@@ -50,10 +49,8 @@ export default function RoastOverlay({ mode='ducky', userName='Abe', goal='Goal'
     }
   }, [mode, userName, roast, unskippable, seconds])
 
-  function playRoastAudio(){
-    try{
-      new Audio('https://actions.googleusercontent.com/sounds/v1/cartoon/wood_plank_flicks.ogg').play().catch(()=>{})
-    }catch(e){}
+  function handlePunch(){
+    try{ if (playPunch) playPunch() }catch(e){}
   }
 
   return (
@@ -63,7 +60,7 @@ export default function RoastOverlay({ mode='ducky', userName='Abe', goal='Goal'
         <p className="roast-text">{userName}! {roast}</p>
         {unskippable && <div className="countdown">Unlocks in <strong>{count}s</strong></div>}
         <div className="roast-actions">
-          <button className="primary" onClick={()=>{playRoastAudio();}}>Play Punch</button>
+          <button className="primary" onClick={handlePunch}>Play Punch</button>
           <button onClick={()=>{ if (!blocked) onClose && onClose() }} disabled={blocked}>Close</button>
         </div>
       </div>

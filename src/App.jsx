@@ -5,6 +5,8 @@ import RoastOverlay from './components/RoastOverlay'
 import ProofScanner from './components/ProofScanner'
 import EmergencyCard from './components/EmergencyCard'
 import TestSimulator from './components/TestSimulator'
+import Onboarding from './components/Onboarding'
+import * as sounds from './utils/sounds'
 
 export default function App() {
   const [userName, setUserName] = useState('Abe');
@@ -16,9 +18,9 @@ export default function App() {
   const [roastMode, setRoastMode] = useState('ducky');
   const [aggressive, setAggressive] = useState(true);
   const [unskippableSeconds, setUnskippableSeconds] = useState(8);
+  const [audioUnlocked, setAudioUnlocked] = useState(!!localStorage.getItem('focus_audio_unlocked'))
   const lastHiddenRef = useRef(null);
   const sirenRef = useRef(null);
-  const restoreResolveRef = useRef(null);
 
   useEffect(() => {
     if (Notification && Notification.permission === 'default') {
@@ -36,11 +38,8 @@ export default function App() {
       } else if (document.visibilityState === 'visible') {
         const leftAt = lastHiddenRef.current;
         if (leftAt && window._focusSessionActive && aggressive) {
-          // treated as a violation
           setViolations((v) => v + 1);
-          // ensure siren playing
           startSiren();
-          // show unskippable roast overlay
           setTimeout(() => setRoastVisible(true), 250);
         }
       }
@@ -75,15 +74,13 @@ export default function App() {
 
   function startSiren(){
     try{
+      if (!audioUnlocked) return
       if (sirenRef.current) return
-      const a = new Audio('https://actions.googleusercontent.com/sounds/v1/alarms/alarm_clock.ogg')
-      a.loop = true
-      a.volume = 1.0
-      a.play().catch(()=>{})
-      sirenRef.current = a
-      // try to keep it playing by re-triggering if paused
+      const s = sounds.createSiren()
+      sirenRef.current = s
+      // keep attempting to resume AudioContext in case it is suspended
       const id = setInterval(()=>{
-        try{ if (sirenRef.current && sirenRef.current.paused) { sirenRef.current.play().catch(()=>{}); } }catch(e){}
+        try{ if (audioUnlocked && typeof sounds.unlockAudio === 'function') { sounds.unlockAudio().catch(()=>{}) } }catch(e){}
       }, 1200)
       sirenRef.current._keepAliveId = id
     }catch(e){}
@@ -93,30 +90,30 @@ export default function App() {
     try{
       if (!sirenRef.current) return
       clearInterval(sirenRef.current._keepAliveId)
-      sirenRef.current.pause()
-      sirenRef.current.currentTime = 0
+      sirenRef.current.stop()
       sirenRef.current = null
     }catch(e){}
   }
 
   function onRoastClose(){
-    // stop siren when roast countdown finishes
     stopSiren()
     setRoastVisible(false)
   }
 
   function handleTestTrigger(){
-    // simulate a backgrounding + return sequence
-    // step 1: simulate hide
     if (aggressive) {
-      startSiren()
+      if (audioUnlocked) startSiren()
       showPersistentNotification(`${userName}! Testing aggressive interception — return to see roast.`)
     }
-    // step 2: show roast overlay after small delay to mimic return
     setTimeout(()=>{
       setViolations((v)=>v+1);
       setRoastVisible(true)
     }, 800)
+  }
+
+  function handleUnlock(){
+    setAudioUnlocked(true)
+    try{ localStorage.setItem('focus_audio_unlocked','1') }catch(e){}
   }
 
   return (
@@ -192,6 +189,7 @@ export default function App() {
               setViolations((v)=>v+1);
               setRoastVisible(true);
             }}
+            playFanfare={sounds.playFanfare}
           />
 
           <div className="card glass stats">
@@ -205,8 +203,10 @@ export default function App() {
       </main>
 
       {roastVisible && (
-        <RoastOverlay mode={roastMode} userName={userName} goal={goal} unskippable seconds={unskippableSeconds} onClose={onRoastClose} />
+        <RoastOverlay mode={roastMode} userName={userName} goal={goal} unskippable seconds={unskippableSeconds} onClose={onRoastClose} playPunch={sounds.playPunch} />
       )}
+
+      {!audioUnlocked && <Onboarding onUnlock={handleUnlock} />}
 
       <footer className="footer">
         <small>Made with neon rage. PWA-ready. Press "Try to Open" on blocked apps to test roasts.</small>
